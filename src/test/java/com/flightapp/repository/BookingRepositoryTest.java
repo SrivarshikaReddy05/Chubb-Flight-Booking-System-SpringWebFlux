@@ -12,41 +12,32 @@ import org.junit.jupiter.api.BeforeEach;
 @DataMongoTest
 class BookingRepositoryTest {
 
-    @Autowired
-    private BookingRepository bookingRepo;
+	@Autowired
+	private BookingRepository bookingRepo;
 
-    @BeforeEach
-    void cleanDB() {
-        bookingRepo.deleteAll().block();   // <-- Clears Mongo before every test
-    }
+	@BeforeEach
+	void cleanDB() {
+		bookingRepo.deleteAll().block();
+	}
 
-    @Test
-    void testFindByPnr() {
-        Booking b = new Booking();
-        b.setPnr("PNR100");
-        b.setFlightId("F1");
+	@Test
+	void testFindByPnr() {
+		Booking b = new Booking();
+		b.setPnr("PNR100");
+		b.setFlightId("F1");
 
-        StepVerifier.create(
-                bookingRepo.save(b)
-                        .then(bookingRepo.findByPnr("PNR100"))
-        )
-        .expectNextMatches(found -> found.getPnr().equals("PNR100"))
-        .verifyComplete();
-    }
+		StepVerifier.create(bookingRepo.save(b).then(bookingRepo.findByPnr("PNR100")))
+				.expectNextMatches(found -> found.getPnr().equals("PNR100")).verifyComplete();
+	}
 
-    @Test
-    void testDeleteByPnr() {
-        Booking b = new Booking();
-        b.setPnr("DEL123");
-        b.setFlightId("F1");
+	@Test
+	void testDeleteByPnr() {
+		Booking b = new Booking();
+		b.setPnr("DEL123");
+		b.setFlightId("F1");
 
-        StepVerifier.create(
-                bookingRepo.save(b)
-                        .then(bookingRepo.deleteByPnr("DEL123"))
-        ).verifyComplete();
+		StepVerifier.create(bookingRepo.save(b).then(bookingRepo.deleteByPnr("DEL123"))).verifyComplete();
 
-        StepVerifier.create(bookingRepo.findByPnr("DEL123"))
-                .verifyComplete();
-    }
+		StepVerifier.create(bookingRepo.findByPnr("DEL123")).verifyComplete();
+	}
 }
-

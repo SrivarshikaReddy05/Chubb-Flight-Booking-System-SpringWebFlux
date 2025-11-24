@@ -15,76 +15,68 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-@Order(-1)   // Ensure this runs before default handlers
+@Order(-1)
 public class GlobalExceptionHandler {
+	@ExceptionHandler(WebExchangeBindException.class)
+	public ResponseEntity<?> handleValidationErrors(WebExchangeBindException ex) {
 
-    // ------------------- 400: Validation Errors -------------------
-    @ExceptionHandler(WebExchangeBindException.class)
-    public ResponseEntity<?> handleValidationErrors(WebExchangeBindException ex) {
+		Map<String, Object> response = new HashMap<>();
+		response.put("timestamp", LocalDateTime.now());
+		response.put("status", HttpStatus.BAD_REQUEST.value());
+		response.put("error", "Validation Error");
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", "Validation Error");
+		Map<String, String> fieldErrors = new HashMap<>();
+		ex.getFieldErrors().forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
 
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getFieldErrors().forEach(err ->
-                fieldErrors.put(err.getField(), err.getDefaultMessage())
-        );
+		response.put("details", fieldErrors);
 
-        response.put("details", fieldErrors);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
+	@ExceptionHandler(ServerWebInputException.class)
+	public ResponseEntity<?> handleInvalidInput(ServerWebInputException ex) {
 
-    // ------------------- 400: Invalid Request Body -------------------
-    @ExceptionHandler(ServerWebInputException.class)
-    public ResponseEntity<?> handleInvalidInput(ServerWebInputException ex) {
+		Map<String, Object> body = new HashMap<>();
+		body.put("timestamp", LocalDateTime.now());
+		body.put("status", HttpStatus.BAD_REQUEST.value());
+		body.put("error", "Malformed JSON Request");
+		body.put("message", ex.getReason());
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Malformed JSON Request");
-        body.put("message", ex.getReason());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+	}
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
-    }
+	@ExceptionHandler(DuplicateKeyException.class)
+	public ResponseEntity<?> handleDuplicateKey(DuplicateKeyException ex) {
 
-    // ------------------- 409: Duplicate Key (MongoDB) -------------------
-    @ExceptionHandler(DuplicateKeyException.class)
-    public ResponseEntity<?> handleDuplicateKey(DuplicateKeyException ex) {
+		Map<String, Object> body = new HashMap<>();
+		body.put("timestamp", LocalDateTime.now());
+		body.put("status", HttpStatus.CONFLICT.value());
+		body.put("error", "Duplicate Record");
+		body.put("message", ex.getMessage());
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.CONFLICT.value());
-        body.put("error", "Duplicate Record");
-        body.put("message", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+	}
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-    }
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<?> handleResponseStatus(ResponseStatusException ex) {
 
-    // ------------------- Custom Errors (ResponseStatusException) -------------------
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<?> handleResponseStatus(ResponseStatusException ex) {
+		Map<String, Object> body = new HashMap<>();
+		body.put("timestamp", LocalDateTime.now());
+		body.put("status", ex.getStatusCode().value());
+		body.put("error", ex.getReason());
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", ex.getStatusCode().value());
-        body.put("error", ex.getReason());
+		return ResponseEntity.status(ex.getStatusCode()).body(body);
+	}
 
-        return ResponseEntity.status(ex.getStatusCode()).body(body);
-    }
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<?> handleAll(Exception ex) {
 
-    // ------------------- 500: All Other Exceptions -------------------
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleAll(Exception ex) {
+		Map<String, Object> body = new HashMap<>();
+		body.put("timestamp", LocalDateTime.now());
+		body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+		body.put("error", "Internal Server Error");
+		body.put("message", ex.getMessage());
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "Internal Server Error");
-        body.put("message", ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
-    }
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+	}
 }

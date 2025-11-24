@@ -19,38 +19,30 @@ import java.util.Collections;
 @WebFluxTest(controllers = FlightController.class)
 class FlightControllerTest {
 
-    @Autowired
-    private WebTestClient webClient;
+	@Autowired
+	private WebTestClient webClient;
 
-    @MockBean
-    private FlightService flightService;
+	@MockBean
+	private FlightService flightService;
 
-    @Test
-    void testBookFlight_Returns200AndBooking() {
+	@Test
+	void testBookFlight_Returns200AndBooking() {
 
-        Booking booking = new Booking();
-        booking.setId("B1");
-        booking.setPnr("PNR12");
-        booking.setFlightId("F1");
+		Booking booking = new Booking();
+		booking.setId("B1");
+		booking.setPnr("PNR12");
+		booking.setFlightId("F1");
 
-        BookingRequest req = new BookingRequest();
-        req.setUserName("Sri");
-        req.setUserEmail("sri@mail.com");
-        req.setJourneyDate(LocalDate.now());
-        req.setPassengers(Collections.emptyList());
+		BookingRequest req = new BookingRequest();
+		req.setUserName("Sri");
+		req.setUserEmail("sri@mail.com");
+		req.setJourneyDate(LocalDate.now());
+		req.setPassengers(Collections.emptyList());
 
-        Mockito.when(
-                flightService.bookTicket(Mockito.eq("F1"), Mockito.any())
-        ).thenReturn(Mono.just(booking));
+		Mockito.when(flightService.bookTicket(Mockito.eq("F1"), Mockito.any())).thenReturn(Mono.just(booking));
 
-        webClient.post()
-                .uri("/api/v1.0/flight/booking/F1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(req)
-                .exchange()
-                .expectStatus().isOk()   // 👈 CHANGED FROM isCreated()
-                .expectBody()
-                .jsonPath("$.id").isEqualTo("B1")
-                .jsonPath("$.pnr").isEqualTo("PNR12");
-    }
+		webClient.post().uri("/api/v1.0/flight/booking/F1").contentType(MediaType.APPLICATION_JSON).bodyValue(req)
+				.exchange().expectStatus().isOk().expectBody().jsonPath("$.id").isEqualTo("B1").jsonPath("$.pnr")
+				.isEqualTo("PNR12");
+	}
 }

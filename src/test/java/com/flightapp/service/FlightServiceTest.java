@@ -19,50 +19,40 @@ import java.time.LocalDateTime;
 
 class FlightServiceTest {
 
-    private FlightService flightService;
+	private FlightService flightService;
 
-    private FlightInventoryRepository flightRepo = Mockito.mock(FlightInventoryRepository.class);
-    private BookingRepository bookingRepo = Mockito.mock(BookingRepository.class);
+	private FlightInventoryRepository flightRepo = Mockito.mock(FlightInventoryRepository.class);
+	private BookingRepository bookingRepo = Mockito.mock(BookingRepository.class);
 
-    @BeforeEach
-    void init() {
-        flightService = new FlightServiceImpl(flightRepo, bookingRepo);
-    }
+	@BeforeEach
+	void init() {
+		flightService = new FlightServiceImpl(flightRepo, bookingRepo);
+	}
 
-    // --------------------- TEST: ADD INVENTORY ---------------------
-    @Test
-    void testAddInventory() {
+	@Test
+	void testAddInventory() {
 
-        InventoryRequest req = new InventoryRequest();
-//        req.setAirline("Indigo");
-        req.setFromPlace("HYD");
-        req.setToPlace("DEL");
-//        req.setJourneyDate(LocalDate.now());
-        req.setPrice(4500);
+		InventoryRequest req = new InventoryRequest();
+		req.setFromPlace("HYD");
+		req.setToPlace("DEL");
+		req.setPrice(4500);
 
-        FlightInventory inv = new FlightInventory();
-        inv.setId("INV1");
+		FlightInventory inv = new FlightInventory();
+		inv.setId("INV1");
 
-        Mockito.when(flightRepo.save(Mockito.any()))
-                .thenReturn(Mono.just(inv));
+		Mockito.when(flightRepo.save(Mockito.any())).thenReturn(Mono.just(inv));
 
-        StepVerifier.create(flightService.addInventory(req))
-                .expectNext("INV1")
-                .verifyComplete();
-    }
+		StepVerifier.create(flightService.addInventory(req)).expectNext("INV1").verifyComplete();
+	}
 
+	@Test
+	void testGetByPnr() {
+		Booking booking = new Booking();
+		booking.setPnr("PNR001");
 
-    // --------------------- TEST: GET BY PNR ---------------------
-    @Test
-    void testGetByPnr() {
-        Booking booking = new Booking();
-        booking.setPnr("PNR001");
+		Mockito.when(bookingRepo.findByPnr("PNR001")).thenReturn(Mono.just(booking));
 
-        Mockito.when(bookingRepo.findByPnr("PNR001"))
-                .thenReturn(Mono.just(booking));
-
-        StepVerifier.create(flightService.getByPnr("PNR001"))
-                .expectNextMatches(b -> b.getPnr().equals("PNR001"))
-                .verifyComplete();
-    }
+		StepVerifier.create(flightService.getByPnr("PNR001")).expectNextMatches(b -> b.getPnr().equals("PNR001"))
+				.verifyComplete();
+	}
 }

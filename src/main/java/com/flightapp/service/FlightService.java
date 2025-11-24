@@ -10,10 +10,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface FlightService {
-    Mono<String> addInventory(InventoryRequest req);
-    Flux<FlightInventory> searchFlights(FlightSearchRequest req);
-    Mono<Booking> bookTicket(String flightId, BookingRequest req);
-    Mono<Booking> getByPnr(String pnr);
-    Flux<Booking> getHistory(String email);
-    Mono<Boolean> cancelBookingByPnr(String pnr);
+	Mono<String> addInventory(InventoryRequest req);
+
+	Flux<FlightInventory> searchFlights(FlightSearchRequest req);
+
+	Mono<Booking> bookTicket(String flightId, BookingRequest req);
+
+	Mono<Booking> getByPnr(String pnr);
+
+	Flux<Booking> getHistory(String email);
+
+	Mono<Boolean> cancelBookingByPnr(String pnr);
 }

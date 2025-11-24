@@ -24,7 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1.0/flight")
+@RequestMapping("/api/flight")
 @Validated
 public class FlightController {
 
@@ -34,7 +34,6 @@ public class FlightController {
         this.service = service;
     }
 
-    // ------------------------------- ADD INVENTORY -------------------------------
     @PostMapping("/airline/inventory/add")
     public Mono<ResponseEntity<BookingIdResponse>> addInventory(@Valid @RequestBody InventoryRequest req) {
         return service.addInventory(req)
@@ -42,13 +41,11 @@ public class FlightController {
                         .body(new BookingIdResponse(id)));
     }
 
-    // ------------------------------- SEARCH FLIGHTS -------------------------------
     @PostMapping("/search")
     public Flux<FlightInventory> searchFlights(@RequestBody FlightSearchRequest req) {
         return service.searchFlights(req);
     }
 
-    // ------------------------------- BOOK TICKET -------------------------------
     @PostMapping("/booking/{flightId}")
     public Mono<Booking> bookTicket(
             @PathVariable String flightId,
@@ -57,7 +54,6 @@ public class FlightController {
         return service.bookTicket(flightId, request);
     }
 
-    // ------------------------------- GET TICKET BY PNR -------------------------------
     @GetMapping("/ticket/{pnr}")
     public Mono<ResponseEntity<Booking>> getTicketByPnr(@PathVariable String pnr) {
         return service.getByPnr(pnr)
@@ -65,29 +61,12 @@ public class FlightController {
                 .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    // ------------------------------- BOOKING HISTORY -------------------------------
     @GetMapping("/booking/history/{email}")
     public Flux<Booking> getHistory(@PathVariable String email) {
         return service.getHistory(email);
     }
 
-    // ------------------------------- CANCEL BOOKING BY PNR -------------------------------
-//    @DeleteMapping("/booking/cancel/{pnr}")
-//    public Mono<ResponseEntity<Void>> cancelBooking(@PathVariable String pnr) {
-//
-//        return service.getByPnr(pnr)
-//                .flatMap(existingBooking ->
-//                        service.cancelBookingByPnr(pnr)
-//                                .flatMap(cancelled -> {
-//                                    if (cancelled) {
-//                                        return Mono.just(ResponseEntity.ok().<Void>build());
-//                                    } else {
-//                                        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
-//                                    }
-//                                })
-//                )
-//                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-//    }
+
     @DeleteMapping("/booking/cancel/{pnr}")
     public Mono<ResponseEntity<Void>> cancelBooking(@PathVariable String pnr) {
 

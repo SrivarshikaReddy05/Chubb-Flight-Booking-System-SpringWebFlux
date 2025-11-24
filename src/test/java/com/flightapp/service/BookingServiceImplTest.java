@@ -26,44 +26,43 @@ import static org.mockito.Mockito.when;
 
 class BookingServiceImplTest {
 
-    @Mock
-    private FlightInventoryRepository flightRepo;
+	@Mock
+	private FlightInventoryRepository flightRepo;
 
-    @Mock
-    private BookingRepository bookingRepo;
+	@Mock
+	private BookingRepository bookingRepo;
 
-    private BookingServiceImpl service;
+	private BookingServiceImpl service;
 
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
-        service = new BookingServiceImpl(flightRepo, bookingRepo);
-    }
+	@BeforeEach
+	void setup() {
+		MockitoAnnotations.openMocks(this);
+		service = new BookingServiceImpl(flightRepo, bookingRepo);
+	}
 
-    @Test
-    void testBookFlightSuccess() {
+	@Test
+	void testBookFlightSuccess() {
 
-        FlightInventory flight = new FlightInventory();
-        flight.setId("F1");
-        flight.setAirlineName("Indigo");
-        flight.setPrice(5000);
+		FlightInventory flight = new FlightInventory();
+		flight.setId("F1");
+		flight.setAirlineName("Indigo");
+		flight.setPrice(5000);
 
-        BookingRequest req = new BookingRequest();
-        req.setUserName("Sri");
-        req.setUserEmail("sri@mail.com");
-        req.setJourneyDate(LocalDate.now());
-        req.setPassengers(Collections.singletonList(new Passenger("Ram", 22, Gender.MALE, "12A")));
-        req.setMealType(MealType.VEG);
+		BookingRequest req = new BookingRequest();
+		req.setUserName("Sri");
+		req.setUserEmail("sri@mail.com");
+		req.setJourneyDate(LocalDate.now());
+		req.setPassengers(Collections.singletonList(new Passenger("Ram", 22, Gender.MALE, "12A")));
+		req.setMealType(MealType.VEG);
 
-        Booking saved = new Booking();
-        saved.setId("B1");
-        saved.setFlightId("F1");
+		Booking saved = new Booking();
+		saved.setId("B1");
+		saved.setFlightId("F1");
 
-        when(flightRepo.findById("F1")).thenReturn(Mono.just(flight));
-        when(bookingRepo.save(any(Booking.class))).thenReturn(Mono.just(saved));
+		when(flightRepo.findById("F1")).thenReturn(Mono.just(flight));
+		when(bookingRepo.save(any(Booking.class))).thenReturn(Mono.just(saved));
 
-        StepVerifier.create(service.bookFlight("F1", req))
-                .expectNextMatches(b -> b.getId().equals("B1"))
-                .verifyComplete();
-    }
+		StepVerifier.create(service.bookFlight("F1", req)).expectNextMatches(b -> b.getId().equals("B1"))
+				.verifyComplete();
+	}
 }

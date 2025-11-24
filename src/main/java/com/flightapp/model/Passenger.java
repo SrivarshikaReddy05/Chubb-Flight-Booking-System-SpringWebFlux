@@ -9,6 +9,13 @@ public class Passenger {
     private String seatNumber;
 
     public Passenger() {}
+    public Passenger(String name, int age, Gender gender, String seatNumber) {
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.seatNumber = seatNumber;
+    }
+
     // getters & setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

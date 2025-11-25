@@ -17,66 +17,51 @@ import java.util.Map;
 @ControllerAdvice
 @Order(-1)
 public class GlobalExceptionHandler {
-	@ExceptionHandler(WebExchangeBindException.class)
-	public ResponseEntity<?> handleValidationErrors(WebExchangeBindException ex) {
 
-		Map<String, Object> response = new HashMap<>();
-		response.put("timestamp", LocalDateTime.now());
-		response.put("status", HttpStatus.BAD_REQUEST.value());
-		response.put("error", "Validation Error");
+    // 🟡 Validation errors (NotBlank, Email, etc.)
+    @ExceptionHandler(WebExchangeBindException.class)
+    public ResponseEntity<?> handleValidationErrors(WebExchangeBindException ex) {
 
-		Map<String, String> fieldErrors = new HashMap<>();
-		ex.getFieldErrors().forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getFieldErrors().forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
 
-		response.put("details", fieldErrors);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(fieldErrors); 
+    }
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-	}
+    @ExceptionHandler(ServerWebInputException.class)
+    public ResponseEntity<?> handleInvalidInput(ServerWebInputException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Malformed JSON Request: " + ex.getReason());
+    }
 
-	@ExceptionHandler(ServerWebInputException.class)
-	public ResponseEntity<?> handleInvalidInput(ServerWebInputException ex) {
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<?> handleDuplicateKey(DuplicateKeyException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("Duplicate Record: " + ex.getMessage());
+    }
 
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("status", HttpStatus.BAD_REQUEST.value());
-		body.put("error", "Malformed JSON Request");
-		body.put("message", ex.getReason());
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<?> handleResponseStatus(ResponseStatusException ex) {
+        return ResponseEntity
+                .status(ex.getStatusCode())
+                .body(ex.getReason());
+    }
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
-	}
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<?> handleRuntime(RuntimeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
 
-	@ExceptionHandler(DuplicateKeyException.class)
-	public ResponseEntity<?> handleDuplicateKey(DuplicateKeyException ex) {
-
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("status", HttpStatus.CONFLICT.value());
-		body.put("error", "Duplicate Record");
-		body.put("message", ex.getMessage());
-
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-	}
-
-	@ExceptionHandler(ResponseStatusException.class)
-	public ResponseEntity<?> handleResponseStatus(ResponseStatusException ex) {
-
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("status", ex.getStatusCode().value());
-		body.put("error", ex.getReason());
-
-		return ResponseEntity.status(ex.getStatusCode()).body(body);
-	}
-
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<?> handleAll(Exception ex) {
-
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-		body.put("error", "Internal Server Error");
-		body.put("message", ex.getMessage());
-
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
-	}
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleAll(Exception ex) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error: " + ex.getMessage());
+    }
 }

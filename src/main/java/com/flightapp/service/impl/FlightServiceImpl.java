@@ -12,6 +12,7 @@ import com.flightapp.dto.InventoryRequest;
 import com.flightapp.model.Booking;
 import com.flightapp.model.FlightInventory;
 import com.flightapp.model.enums.BookingStatus;
+import com.flightapp.model.enums.MealType;
 import com.flightapp.repository.BookingRepository;
 import com.flightapp.repository.FlightInventoryRepository;
 import com.flightapp.service.FlightService;
@@ -33,17 +34,31 @@ public class FlightServiceImpl implements FlightService {
 
 	@Override
 	public Mono<String> addInventory(InventoryRequest req) {
-		FlightInventory inv = new FlightInventory();
-		inv.setAirlineId(req.getAirlineId());
-		inv.setAirlineName(req.getAirlineName());
-		inv.setFromPlace(req.getFromPlace());
-		inv.setToPlace(req.getToPlace());
-		inv.setDepartureTime(req.getDepartureTime());
-		inv.setArrivalTime(req.getArrivalTime());
-		inv.setPrice(req.getPrice());
-		inv.setTotalSeats(req.getTotalSeats());
-		return inventoryRepository.save(inv).map(FlightInventory::getId);
+
+	    return inventoryRepository
+	            .findByAirlineIdAndFromPlaceAndToPlaceAndDepartureTime(
+	                    req.getAirlineId(),
+	                    req.getFromPlace(),
+	                    req.getToPlace(),
+	                    req.getDepartureTime()
+	            )
+	            .flatMap(existing -> Mono.<String>error(new RuntimeException("Flight already exists")))
+	            .switchIfEmpty(Mono.defer(() -> {
+
+	                FlightInventory inv = new FlightInventory();
+	                inv.setAirlineId(req.getAirlineId());
+	                inv.setAirlineName(req.getAirlineName());
+	                inv.setFromPlace(req.getFromPlace());
+	                inv.setToPlace(req.getToPlace());
+	                inv.setDepartureTime(req.getDepartureTime());
+	                inv.setArrivalTime(req.getArrivalTime());
+	                inv.setPrice(req.getPrice());
+	                inv.setTotalSeats(req.getTotalSeats());
+
+	                return inventoryRepository.save(inv).map(FlightInventory::getId);
+	            }));
 	}
+
 
 	@Override
 	public Flux<FlightInventory> searchFlights(FlightSearchRequest req) {
@@ -57,23 +72,36 @@ public class FlightServiceImpl implements FlightService {
 
 	@Override
 	public Mono<Booking> bookTicket(String flightId, BookingRequest req) {
-		// Simplified seating / availability logic: not deducting seats in depth.
-		return inventoryRepository.findById(flightId).flatMap(inv -> {
-			Booking b = new Booking();
-			b.setFlightId(inv.getId());
-			b.setAirlineName(inv.getAirlineName());
-			b.setUserName(req.getUserName());
-			b.setUserEmail(req.getUserEmail());
-			b.setJourneyDate(req.getJourneyDate());
-			b.setPassengers(req.getPassengers());
-			b.setMealType(req.getMealType() == null ? com.flightapp.model.enums.MealType.NONE : req.getMealType());
-			b.setStatus(BookingStatus.CONFIRMED);
-			b.setPnr(PnrGenerator.generatePnr());
-			double total = inv.getPrice() * (req.getPassengers() == null ? 1 : req.getPassengers().size());
-			b.setTotalAmount(total);
-			return bookingRepository.save(b);
-		});
+
+	    // 🔥 VALIDATION: Passenger list should not be empty
+	    if (req.getPassengers() == null || req.getPassengers().isEmpty()) {
+	        return Mono.error(new RuntimeException(
+	                "Enter Passenger Details... Passenger list cant be empty"
+	        ));
+	    }
+
+	    return inventoryRepository.findById(flightId)
+	            .switchIfEmpty(Mono.error(new RuntimeException("Flight not found")))
+	            .flatMap(inv -> {
+
+	                Booking b = new Booking();
+	                b.setFlightId(inv.getId());
+	                b.setAirlineName(inv.getAirlineName());
+	                b.setUserName(req.getUserName());
+	                b.setUserEmail(req.getUserEmail());
+	                b.setJourneyDate(req.getJourneyDate());
+	                b.setPassengers(req.getPassengers());
+	                b.setMealType(req.getMealType() == null ? MealType.NONE : req.getMealType());
+	                b.setStatus(BookingStatus.CONFIRMED);
+	                b.setPnr(PnrGenerator.generatePnr());
+
+	                double total = inv.getPrice() * req.getPassengers().size();
+	                b.setTotalAmount(total);
+
+	                return bookingRepository.save(b);
+	            });
 	}
+
 
 	@Override
 	public Mono<Booking> getByPnr(String pnr) {
